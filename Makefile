@@ -31,8 +31,8 @@ $(TARGET): $(SRC)
 release: guard-VERSION guard-GITHUB_TOKEN compile
 	github-release info --user $(GITHUB_OWNER) --repo $(GITHUB_REPOSITORY)
 	github-release release --user $(GITHUB_OWNER) --repo $(GITHUB_REPOSITORY) --tag v$(VERSION) --name v$(VERSION)
-	for f in build/linux/*; do github-release upload --user $(GITHUB_OWNER) --repo $(GITHUB_REPOSITORY) --tag v$(VERSION) --name linux/`basename $${f}` --file $${f}; done
-	for f in build/darwin/*; do github-release upload --user $(GITHUB_OWNER) --repo $(GITHUB_REPOSITORY) --tag v$(VERSION) --name darwin/`basename $${f}` --file $${f}; done
+	cd build && zip -r linux linux && github-release upload --user $(GITHUB_OWNER) --repo $(GITHUB_REPOSITORY) --tag v$(VERSION) --name linux.zip --file linux.zip;
+	cd build && zip -r darwin darwin && github-release upload --user $(GITHUB_OWNER) --repo $(GITHUB_REPOSITORY) --tag v$(VERSION) --name darwin.zip --file darwin.zip;
 	github-release edit --user $(GITHUB_OWNER) --repo $(GITHUB_REPOSITORY) --tag v$(VERSION) --name v$(VERSION) --description v$(VERSION)
 
 compile: check goxcompile
