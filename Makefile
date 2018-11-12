@@ -1,5 +1,8 @@
 SHELL := /bin/bash
 
+GITHUB_OWNER         = moia-dev
+GITHUB_REPOSITORY    = k8s-oidc-helper
+
 # The destination for binaries
 BUILD_DIR = build
 
@@ -8,7 +11,7 @@ TARGET := $(shell echo $${PWD\#\#*/})
 .DEFAULT_GOAL: $(TARGET)
 
 # These will be provided to the target
-VERSION :=0.9.0-rc1
+VERSION :=0.2.0
 BUILD := `git rev-parse HEAD`
 
 # Use linker flags to provide version/build settings to the target
@@ -23,6 +26,14 @@ all: check compile
 
 $(TARGET): $(SRC)
 	@go build $(LDFLAGS) -o $(TARGET)
+
+.PHONY: release
+release: guard-VERSION guard-GITHUB_TOKEN compile
+	github-release info --user $(GITHUB_OWNER) --repo $(GITHUB_REPOSITORY)
+	github-release release --user $(GITHUB_OWNER) --repo $(GITHUB_REPOSITORY) --tag v$(VERSION) --name v$(VERSION)
+	for f in build/linux/*; do github-release upload --user $(GITHUB_OWNER) --repo $(GITHUB_REPOSITORY) --tag v$(VERSION) --name linux/`basename $${f}` --file $${f}; done
+	for f in build/darwin/*; do github-release upload --user $(GITHUB_OWNER) --repo $(GITHUB_REPOSITORY) --tag v$(VERSION) --name darwin/`basename $${f}` --file $${f}; done
+	github-release edit --user $(GITHUB_OWNER) --repo $(GITHUB_REPOSITORY) --tag v$(VERSION) --name v$(VERSION) --description v$(VERSION)
 
 compile: check goxcompile
 
@@ -59,3 +70,9 @@ dependencies:
 	go get github.com/jstemmer/go-junit-report
 	go get github.com/golang/lint/golint
 	git submodule update --init --recursive
+
+guard-%:
+	@ if [ "${${*}}" = "" ]; then \
+             echo "Environment variable $* not set"; \
+             exit 1; \
+        fi
